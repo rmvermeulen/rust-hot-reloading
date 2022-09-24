@@ -4,7 +4,7 @@ use shared::State;
 #[no_mangle]
 pub fn update_state(state: &mut State) {
     let n = match state.items.last() {
-        Some(x) => x + state.rng.gen_range(-100, 101),
+        Some(x) => x + state.rng.gen_range(-5, 5),
         None => 0,
     };
 

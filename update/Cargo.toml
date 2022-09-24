@@ -7,4 +7,4 @@ shared = { path = "../shared" }
 
 [lib]
 crate-type = ["rlib", "dylib"]
-
+path = "src/update.rs"
