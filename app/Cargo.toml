@@ -8,6 +8,8 @@ shared = { path = "../shared" }
 update = { path = "../update"}
 rand = "0.5.4"
 view = { path = "../view"}
+piston_window = "0.124.0"
+find_folder = "0.3.0"
 
 [features]
 hot_reload_libs = []

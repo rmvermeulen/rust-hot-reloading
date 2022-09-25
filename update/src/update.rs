@@ -13,4 +13,6 @@ pub fn update_state(state: &mut State) {
     while state.items.len() > 10 {
         state.items.remove(0);
     }
+
+    state.items = state.items.iter().map(|n| n % 512).collect();
 }

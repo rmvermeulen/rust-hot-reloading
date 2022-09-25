@@ -9,3 +9,5 @@ shared = { path = "../shared" }
 [lib]
 crate-type = ["rlib", "dylib"]
 path = "src/view.rs"
+piston = "0.53.1"
+piston_window = "0.124.0"
