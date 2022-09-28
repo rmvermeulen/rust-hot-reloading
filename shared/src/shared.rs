@@ -1,11 +1,14 @@
+extern crate piston_window;
 pub mod glyph_cache_manager;
 
-use std::time::Duration;
+use piston_window::G2dTexture;
+use std::{collections::HashMap, rc::Rc, time::Duration};
 
 pub type GlyphCacheManager = glyph_cache_manager::GlyphCacheManager;
 
-pub struct Resources {
+pub struct GameAssets {
     pub glyphs: GlyphCacheManager,
+    pub textures: HashMap<String, Rc<G2dTexture>>,
 }
 
 #[derive(Debug, Clone, Copy)]

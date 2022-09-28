@@ -1,7 +1,7 @@
 extern crate piston_window;
 extern crate shared;
 extern crate sprite;
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 #[cfg(feature = "hot_reload_libs")]
 extern crate hot_reload_lib;
@@ -76,16 +76,16 @@ impl Application {
     }
 
     #[cfg(feature = "hot_reload_libs")]
-    fn view_state(&mut self, res: &mut shared::Resources, ctx: Context, g: &mut G2d) {
+    fn view_state(&mut self, res: &mut shared::GameAssets, ctx: Context, g: &mut G2d) {
         self.libs
             .view
-            .load_symbol::<fn(&shared::State, &mut shared::Resources, Context, &mut G2d)>(
+            .load_symbol::<fn(&shared::State, &mut shared::GameAssets, Context, &mut G2d)>(
                 "view_state",
             )(&self.state, res, ctx, g);
     }
 
     #[cfg(not(feature = "hot_reload_libs"))]
-    fn view_state(&mut self, res: &mut shared::Resources, ctx: Context, g: &mut G2d) {
+    fn view_state(&mut self, res: &mut shared::GameAssets, ctx: Context, g: &mut G2d) {
         view::view_state(&self.state, res, ctx, g);
     }
 }
@@ -110,8 +110,9 @@ fn main() {
         vec!["Kenney Pixel.ttf", "FiraCode-Regular.ttf"],
     );
 
-    let mut res = shared::Resources {
+    let mut res = shared::GameAssets {
         glyphs: glyph_cache_manager,
+        textures: HashMap::new(),
     };
 
     let mut tex_ctx = window.create_texture_context();
@@ -125,12 +126,13 @@ fn main() {
         )
         .expect("Failed to load spaceship texture"),
     );
-    let mut sprite = Sprite::from_texture(texture);
-    sprite.set_position(300., 400.);
+    res.textures.insert("Ship1_blue".into(), texture);
+    // let mut sprite = Sprite::from_texture(texture);
+    // sprite.set_position(300., 400.);
 
-    let mut scene = Scene::new();
+    // let mut scene = Scene::new();
 
-    scene.add_child(sprite);
+    // scene.add_child(sprite);
 
     println!("Starting application loop");
 
@@ -174,7 +176,7 @@ fn main() {
             //     ctx.transform.clone().trans(50., 20.),
             //     graphics,
             // );
-            scene.draw(ctx.transform, graphics);
+            // scene.draw(ctx.transform, graphics);
             counter += 1;
             let test_str = "aabcc<^&><*&()A0123456789abcdefghijklmnopqrstuvwxyz000->><";
             let str_to_draw = format!("Counter: {}", counter);

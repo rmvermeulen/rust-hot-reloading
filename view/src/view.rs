@@ -1,11 +1,13 @@
 extern crate piston_window;
+extern crate sprite;
+
 extern crate shared;
-use std::path::PathBuf;
 
 use piston_window::*;
+use sprite::{Scene, Sprite};
 
 #[no_mangle]
-pub fn view_state(state: &shared::State, res: &mut shared::Resources, ctx: Context, g: &mut G2d) {
+pub fn view_state(state: &shared::State, res: &mut shared::GameAssets, ctx: Context, g: &mut G2d) {
     // println!("view_state: {:?}", state);
     // clear([0., 0., 1., 1.], g);
 
@@ -29,4 +31,17 @@ pub fn view_state(state: &shared::State, res: &mut shared::Resources, ctx: Conte
             g,
         );
     }
+
+    let texture = res
+        .textures
+        .get("Ship1_blue".into())
+        .expect("Failed to get texture in view::view_state");
+
+    let mut sprite = Sprite::from_texture(texture.clone());
+    sprite.set_position(300., 400.);
+
+    let mut scene = Scene::new();
+
+    scene.add_child(sprite);
+    scene.draw(ctx.transform, g);
 }
