@@ -10,6 +10,7 @@ rand = "0.5.4"
 view = { path = "../view"}
 piston_window = "0.124.0"
 find_folder = "0.3.0"
+piston2d-sprite = "0.66.0"
 
 [features]
 hot_reload_libs = []

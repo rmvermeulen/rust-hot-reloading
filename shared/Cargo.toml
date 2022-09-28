@@ -4,3 +4,6 @@ version = "0.1.0"
 
 [lib]
 path = "src/shared.rs"
+
+[dependencies]
+piston_window = "0.124.0"

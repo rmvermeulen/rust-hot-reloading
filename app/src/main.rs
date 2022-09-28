@@ -1,6 +1,7 @@
 extern crate piston_window;
 extern crate shared;
-use std::{thread, time};
+extern crate sprite;
+use std::rc::Rc;
 
 #[cfg(feature = "hot_reload_libs")]
 extern crate hot_reload_lib;
@@ -14,6 +15,7 @@ extern crate view;
 #[cfg(feature = "hot_reload_libs")]
 use hot_reload_lib::HotReloadLib;
 use piston_window::*;
+use sprite::{Scene, Sprite};
 
 use std::path::PathBuf;
 
@@ -74,51 +76,17 @@ impl Application {
     }
 
     #[cfg(feature = "hot_reload_libs")]
-    fn view_state(&mut self, ctx: Context, g: &mut G2d) {
+    fn view_state(&mut self, res: &mut shared::Resources, ctx: Context, g: &mut G2d) {
         self.libs
             .view
-            .load_symbol::<fn(&shared::State, Context, &mut G2d)>("view_state")(
-            &self.state,
-            ctx,
-            g,
-        );
+            .load_symbol::<fn(&shared::State, &mut shared::Resources, Context, &mut G2d)>(
+                "view_state",
+            )(&self.state, res, ctx, g);
     }
 
     #[cfg(not(feature = "hot_reload_libs"))]
-    fn view_state(&mut self, ctx: Context, g: &mut G2d) {
-        view::view_state(&self.state, ctx, g);
-    }
-}
-
-struct GlyphCacheManager {
-    glyphs: Vec<Box<Glyphs>>,
-}
-
-impl GlyphCacheManager {
-    pub fn new(
-        window: &mut PistonWindow,
-        assets_path: &PathBuf,
-        fonts: Vec<&str>,
-    ) -> GlyphCacheManager {
-        GlyphCacheManager {
-            glyphs: fonts
-                .into_iter()
-                .map(|font| window.load_font(assets_path.join(font)).map(Box::new))
-                .collect::<Result<Vec<_>, _>>()
-                .unwrap(),
-        }
-    }
-
-    pub fn get_glyphs_cache<F>(&mut self, index: usize, mut use_fn: F)
-    where
-        F: FnMut(&mut Glyphs) -> (),
-    {
-        self.glyphs.get_mut(index).map(|g| use_fn(&mut *g));
-    }
-    pub fn flush_factor_encode(&mut self, device: &mut GfxDevice) {
-        self.glyphs
-            .iter_mut()
-            .for_each(|g| g.factory.encoder.flush(device));
+    fn view_state(&mut self, res: &mut shared::Resources, ctx: Context, g: &mut G2d) {
+        view::view_state(&self.state, res, ctx, g);
     }
 }
 
@@ -136,11 +104,33 @@ fn main() {
         .for_folder("assets")
         .unwrap();
 
-    let mut glyph_cache_manager = GlyphCacheManager::new(
+    let mut glyph_cache_manager = shared::GlyphCacheManager::new(
         &mut window,
         &assets_path,
         vec!["Kenney Pixel.ttf", "FiraCode-Regular.ttf"],
     );
+
+    let mut res = shared::Resources {
+        glyphs: glyph_cache_manager,
+    };
+
+    let mut tex_ctx = window.create_texture_context();
+
+    let texture = Rc::new(
+        Texture::from_path(
+            &mut tex_ctx,
+            "./assets/textures/playerShip1_blue.png",
+            Flip::None,
+            &TextureSettings::new(),
+        )
+        .expect("Failed to load spaceship texture"),
+    );
+    let mut sprite = Sprite::from_texture(texture);
+    sprite.set_position(300., 400.);
+
+    let mut scene = Scene::new();
+
+    scene.add_child(sprite);
 
     println!("Starting application loop");
 
@@ -176,7 +166,6 @@ fn main() {
         if let Some(args) = event.update_args() {
             app.update_state(args.dt);
         }
-        thread::sleep(time::Duration::from_millis(10));
         window.draw_2d(&event, |ctx, graphics, device| {
             clear([1.0; 4], graphics);
             // rectangle(
@@ -185,13 +174,13 @@ fn main() {
             //     ctx.transform.clone().trans(50., 20.),
             //     graphics,
             // );
-
+            scene.draw(ctx.transform, graphics);
             counter += 1;
             let test_str = "aabcc<^&><*&()A0123456789abcdefghijklmnopqrstuvwxyz000->><";
             let str_to_draw = format!("Counter: {}", counter);
             // println!("'{}'", str_to_draw.as_str());
 
-            glyph_cache_manager.get_glyphs_cache(0, |glyphs| {
+            res.glyphs.get_glyphs_cache(0, |glyphs| {
                 text(
                     [0.0, 0.0, 0.0, 1.0],
                     20,
@@ -214,7 +203,7 @@ fn main() {
                 .unwrap();
             });
 
-            glyph_cache_manager.get_glyphs_cache(1, |glyphs| {
+            res.glyphs.get_glyphs_cache(1, |glyphs| {
                 text(
                     [0.0, 0.0, 0.0, 1.0],
                     20,
@@ -235,11 +224,13 @@ fn main() {
                 )
                 .unwrap();
             });
-            println!("before view_state");
-            view::view_state(&app.state, ctx, graphics);
-            println!("after view_state");
+            // println!("before view_state");
+
+            app.view_state(&mut res, ctx, graphics);
+            // view::view_state(&app.state, ctx, graphics);
+            // println!("after view_state");
             // Update glyphs before rendering.
-            glyph_cache_manager.flush_factor_encode(device);
+            res.glyphs.flush_factory_encoder(device);
         });
     }
 }
