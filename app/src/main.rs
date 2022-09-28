@@ -126,13 +126,15 @@ fn main() {
         )
         .expect("Failed to load spaceship texture"),
     );
-    res.textures.insert("Ship1_blue".into(), texture);
-    // let mut sprite = Sprite::from_texture(texture);
-    // sprite.set_position(300., 400.);
+    res.textures.insert("Ship1_blue".into(), texture.clone());
 
-    // let mut scene = Scene::new();
+    let mut sprite = Sprite::from_texture(texture.clone());
+    sprite.set_position(100., 400.);
 
-    // scene.add_child(sprite);
+    let mut scene = Scene::new();
+
+    scene.add_child(sprite);
+    app.state.current_scene = Some(scene);
 
     println!("Starting application loop");
 

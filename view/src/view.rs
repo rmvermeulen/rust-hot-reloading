@@ -32,16 +32,7 @@ pub fn view_state(state: &shared::State, res: &mut shared::GameAssets, ctx: Cont
         );
     }
 
-    let texture = res
-        .textures
-        .get("Ship1_blue".into())
-        .expect("Failed to get texture in view::view_state");
-
-    let mut sprite = Sprite::from_texture(texture.clone());
-    sprite.set_position(300., 400.);
-
-    let mut scene = Scene::new();
-
-    scene.add_child(sprite);
-    scene.draw(ctx.transform, g);
+    if let Some(scene) = &state.current_scene {
+        scene.draw(ctx.transform, g);
+    }
 }
