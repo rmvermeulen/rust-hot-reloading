@@ -9,11 +9,11 @@ use sprite::{Scene, Sprite};
 #[no_mangle]
 pub fn view_state(state: &shared::State, res: &mut shared::GameAssets, ctx: Context, g: &mut G2d) {
     // println!("view_state: {:?}", state);
-    // clear([0., 0., 1., 1.], g);
+    clear([0.7, 0.7, 0.7, 1.], g);
 
     res.glyphs.get_glyphs_cache(0, |font| {
         text(
-            [0., 0., 0., 1.],
+            [0.2, 0.2, 0.2, 1.],
             32,
             "text from view::view_state!",
             font,

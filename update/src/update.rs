@@ -18,10 +18,20 @@ pub fn update_state(delta: f64, state: &mut State) {
             let sprite = scene
                 .child_mut(id)
                 .expect("Sprite suddenly missing? Scene changed somehow?");
-            let actor = state.actors.get(&id).expect("Missing actor for sprite");
+            let actor = state.actors.get_mut(&id).expect("Missing actor for sprite");
             let (x, y) = sprite.get_position();
-            let Vec2f { x: vx, y: vy } = actor.velocity;
-            sprite.set_position(x + vx, y + vy);
+            let v = &mut actor.velocity;
+            let x = x + v.x * delta;
+            let y = y + v.y * delta;
+            sprite.set_position(x % 512., y % 512.);
+            v.y += 100. * delta;
+            v.y = if v.y > 1000. {
+                1000.
+            } else if v.y < -1000. {
+                -1000.
+            } else {
+                v.y
+            };
         }
     }
 }

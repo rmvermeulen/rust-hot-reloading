@@ -15,7 +15,7 @@ extern crate view;
 #[cfg(feature = "hot_reload_libs")]
 use hot_reload_lib::HotReloadLib;
 use piston_window::*;
-use shared::Actor;
+use shared::{Actor, Vec2f};
 use sprite::{Scene, Sprite};
 
 #[cfg(feature = "hot_reload_libs")]
@@ -132,7 +132,13 @@ fn main() {
 
     let mut scene = Box::new(Scene::new());
     let id = scene.add_child(sprite);
-    app.state.actors.insert(id, Box::new(Actor::new(id)));
+    app.state.actors.insert(
+        id,
+        Box::new(Actor {
+            id,
+            velocity: Vec2f { x: 10.0, y: 0.0 },
+        }),
+    );
 
     app.state.scenes.push(scene);
 
