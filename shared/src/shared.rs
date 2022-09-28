@@ -1,10 +1,13 @@
 extern crate piston_window;
 extern crate sprite;
+extern crate uuid;
+
 pub mod glyph_cache_manager;
 
 use piston_window::G2dTexture;
 use sprite::Scene;
 use std::{collections::HashMap, rc::Rc, time::Duration};
+use uuid::Uuid;
 
 pub type GlyphCacheManager = glyph_cache_manager::GlyphCacheManager;
 
@@ -25,15 +28,23 @@ impl Vec2f {
 
 #[derive(Debug, Clone)]
 pub struct Actor {
-    pub pos: Vec2f,
-    pub scale: Vec2f,
+    pub id: Uuid,
+    pub velocity: Vec2f,
 }
-// #[derive(Debug)]
+impl Actor {
+    pub fn new(id: Uuid) -> Actor {
+        Actor {
+            id,
+            velocity: Vec2f { x: 0., y: 0. },
+        }
+    }
+}
+
 pub struct State {
     pub updates: i32,
     pub elapsed: Duration,
-    pub actors: Vec<Actor>,
-    pub current_scene: Option<Scene<G2dTexture>>,
+    pub scenes: Vec<Box<Scene<G2dTexture>>>,
+    pub actors: HashMap<Uuid, Box<Actor>>,
 }
 
 impl State {
@@ -41,11 +52,8 @@ impl State {
         State {
             updates: 0,
             elapsed: Default::default(),
-            actors: vec![Actor {
-                pos: Vec2f { x: 100., y: 100. },
-                scale: Vec2f::UNIT,
-            }],
-            current_scene: None,
+            scenes: Default::default(),
+            actors: Default::default(),
         }
     }
 }

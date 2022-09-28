@@ -15,9 +15,8 @@ extern crate view;
 #[cfg(feature = "hot_reload_libs")]
 use hot_reload_lib::HotReloadLib;
 use piston_window::*;
+use shared::Actor;
 use sprite::{Scene, Sprite};
-
-use std::path::PathBuf;
 
 #[cfg(feature = "hot_reload_libs")]
 struct HotReloadLibs {
@@ -104,7 +103,7 @@ fn main() {
         .for_folder("assets")
         .unwrap();
 
-    let mut glyph_cache_manager = shared::GlyphCacheManager::new(
+    let glyph_cache_manager = shared::GlyphCacheManager::new(
         &mut window,
         &assets_path,
         vec!["Kenney Pixel.ttf", "FiraCode-Regular.ttf"],
@@ -131,109 +130,24 @@ fn main() {
     let mut sprite = Sprite::from_texture(texture.clone());
     sprite.set_position(100., 400.);
 
-    let mut scene = Scene::new();
+    let mut scene = Box::new(Scene::new());
+    let id = scene.add_child(sprite);
+    app.state.actors.insert(id, Box::new(Actor::new(id)));
 
-    scene.add_child(sprite);
-    app.state.current_scene = Some(scene);
+    app.state.scenes.push(scene);
 
     println!("Starting application loop");
-
-    let mut counter = 0;
 
     while let Some(event) = window.next() {
         // println!("event: {:?}", event);
         #[cfg(feature = "hot_reload_libs")]
         app.libs.update_libs();
 
-        // match event {
-        //     Event::Loop(lEvent) => match lEvent {
-        //         Loop::Update(UpdateArgs { dt }) => {
-        //             app.update_state(dt);
-        //         }
-        //         Loop::Render(RenderArgs {
-        //             ext_dt,
-        //             window_size,
-        //             draw_size,
-        //         }) => {
-        //             let w = &mut window;
-
-        //             w.draw_2d(&event, |ctx, g, _d| {
-        //                 // move what into where now
-        //                 view::view_state_2(ctx, g, &app.state);
-        //             });
-        //             // app.view_state(&event);
-        //         }
-        //         _ => (),
-        //     },
-        //     _ => (),
-        // };
         if let Some(args) = event.update_args() {
             app.update_state(args.dt);
         }
         window.draw_2d(&event, |ctx, graphics, device| {
-            clear([1.0; 4], graphics);
-            // rectangle(
-            //     [1.0, 0.0, 0.0, 0.5], //red
-            //     [0.0, 0.0, 100.0, 100.0],
-            //     ctx.transform.clone().trans(50., 20.),
-            //     graphics,
-            // );
-            // scene.draw(ctx.transform, graphics);
-            counter += 1;
-            let test_str = "aabcc<^&><*&()A0123456789abcdefghijklmnopqrstuvwxyz000->><";
-            let str_to_draw = format!("Counter: {}", counter);
-            // println!("'{}'", str_to_draw.as_str());
-
-            res.glyphs.get_glyphs_cache(0, |glyphs| {
-                text(
-                    [0.0, 0.0, 0.0, 1.0],
-                    20,
-                    // str_to_draw.as_str(),
-                    &test_str,
-                    glyphs,
-                    ctx.transform.clone().trans(0., 50.),
-                    graphics,
-                )
-                .unwrap();
-
-                text(
-                    [0.0, 0.0, 0.0, 1.0],
-                    20,
-                    str_to_draw.as_str(),
-                    glyphs,
-                    ctx.transform.clone().trans(0., 140.),
-                    graphics,
-                )
-                .unwrap();
-            });
-
-            res.glyphs.get_glyphs_cache(1, |glyphs| {
-                text(
-                    [0.0, 0.0, 0.0, 1.0],
-                    20,
-                    // str_to_draw.as_str(),
-                    &test_str,
-                    glyphs,
-                    ctx.transform.clone().trans(0., 80.),
-                    graphics,
-                )
-                .unwrap();
-                text(
-                    [0.0, 0.0, 0.0, 1.0],
-                    20,
-                    str_to_draw.as_str(),
-                    glyphs,
-                    ctx.transform.clone().trans(0., 120.),
-                    graphics,
-                )
-                .unwrap();
-            });
-            // println!("before view_state");
-
             app.view_state(&mut res, ctx, graphics);
-            // view::view_state(&app.state, ctx, graphics);
-            // println!("after view_state");
-            // Update glyphs before rendering.
             res.glyphs.flush_factory_encoder(device);
         });
     }

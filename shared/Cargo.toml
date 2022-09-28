@@ -8,3 +8,4 @@ path = "src/shared.rs"
 [dependencies]
 piston_window = "0.124.0"
 piston2d-sprite = "0.66.0"
+uuid = "0.6.5"

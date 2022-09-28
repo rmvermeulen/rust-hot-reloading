@@ -23,16 +23,7 @@ pub fn view_state(state: &shared::State, res: &mut shared::GameAssets, ctx: Cont
         .expect("Failed to draw text in view::view_state")
     });
 
-    for actor in &state.actors {
-        rectangle(
-            [1., 1., 0., 1.],
-            [-50., -50., 100., 100.],
-            ctx.transform.clone().trans(actor.pos.x, actor.pos.y),
-            g,
-        );
-    }
-
-    if let Some(scene) = &state.current_scene {
+    if let Some(scene) = &state.scenes.first() {
         scene.draw(ctx.transform, g);
     }
 }
