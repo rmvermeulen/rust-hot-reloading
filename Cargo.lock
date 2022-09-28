@@ -1802,6 +1802,8 @@ dependencies = [
 name = "view"
 version = "0.1.0"
 dependencies = [
+ "piston",
+ "piston_window",
  "shared",
 ]
 

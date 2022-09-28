@@ -1,6 +1,6 @@
 extern crate piston_window;
-extern crate rand;
 extern crate shared;
+use std::{thread, time};
 
 #[cfg(feature = "hot_reload_libs")]
 extern crate hot_reload_lib;
@@ -13,18 +13,9 @@ extern crate view;
 
 #[cfg(feature = "hot_reload_libs")]
 use hot_reload_lib::HotReloadLib;
+use piston_window::*;
 
-use piston_window::{glyph_cache::rusttype::GlyphCache, GfxDevice, Glyphs, PistonWindow, Window};
-use rand::Rng;
-use std::{ops::Index, path::PathBuf, thread, time};
-
-struct RngImpl;
-
-impl shared::Rng for RngImpl {
-    fn gen_range(&mut self, low: i32, high: i32) -> i32 {
-        rand::thread_rng().gen_range(low, high)
-    }
-}
+use std::path::PathBuf;
 
 #[cfg(feature = "hot_reload_libs")]
 struct HotReloadLibs {
@@ -60,10 +51,8 @@ struct Application {
 
 impl Application {
     fn new(_hot_reload_libs_folder: &str) -> Application {
-        let rng = Box::new(RngImpl {});
-
         Application {
-            state: shared::State::new(rng),
+            state: shared::State::new(),
 
             #[cfg(feature = "hot_reload_libs")]
             libs: HotReloadLibs::new(_hot_reload_libs_folder),
@@ -71,27 +60,33 @@ impl Application {
     }
 
     #[cfg(feature = "hot_reload_libs")]
-    fn update_state(&mut self) {
+    fn update_state(&mut self, delta: f64) {
         self.libs
             .update
-            .load_symbol::<fn(&mut shared::State)>("update_state")(&mut self.state);
+            .load_symbol::<fn(f64, &mut shared::State)>("update_state")(
+            delta, &mut self.state
+        );
     }
 
     #[cfg(not(feature = "hot_reload_libs"))]
-    fn update_state(&mut self) {
-        update::update_state(&mut self.state);
+    fn update_state(&mut self, delta: f64) {
+        update::update_state(delta, &mut self.state);
     }
 
     #[cfg(feature = "hot_reload_libs")]
-    fn view_state(&self) {
+    fn view_state(&mut self, ctx: Context, g: &mut G2d) {
         self.libs
             .view
-            .load_symbol::<fn(&shared::State)>("view_state")(&self.state);
+            .load_symbol::<fn(&shared::State, Context, &mut G2d)>("view_state")(
+            &self.state,
+            ctx,
+            g,
+        );
     }
 
     #[cfg(not(feature = "hot_reload_libs"))]
-    fn view_state(&self) {
-        view::view_state(&self.state);
+    fn view_state(&mut self, ctx: Context, g: &mut G2d) {
+        view::view_state(&self.state, ctx, g);
     }
 }
 
@@ -128,14 +123,13 @@ impl GlyphCacheManager {
 }
 
 fn main() {
-    let mut app = Application::new("target/debug");
-
     println!("Creating window");
     use piston_window::*;
     let mut window: PistonWindow = WindowSettings::new("Hello piston!", [800, 600])
         .exit_on_esc(true)
         .build()
         .unwrap();
+    let mut app = Application::new("target/debug");
 
     println!("Locating assets");
     let assets_path = find_folder::Search::ParentsThenKids(3, 3)
@@ -149,35 +143,53 @@ fn main() {
     );
 
     println!("Starting application loop");
-    let mut loops_left = 100;
-    let mut counter = 100;
+
+    let mut counter = 0;
+
     while let Some(event) = window.next() {
+        // println!("event: {:?}", event);
         #[cfg(feature = "hot_reload_libs")]
         app.libs.update_libs();
 
-        counter -= 1;
-        if counter <= 0 {
-            loops_left -= 1;
-            if loops_left <= 0 {
-                return;
-            }
-            app.update_state();
-            app.view_state();
-            counter = 1000;
-        }
+        // match event {
+        //     Event::Loop(lEvent) => match lEvent {
+        //         Loop::Update(UpdateArgs { dt }) => {
+        //             app.update_state(dt);
+        //         }
+        //         Loop::Render(RenderArgs {
+        //             ext_dt,
+        //             window_size,
+        //             draw_size,
+        //         }) => {
+        //             let w = &mut window;
 
-        // thread::sleep(time::Duration::from_millis(1000));
+        //             w.draw_2d(&event, |ctx, g, _d| {
+        //                 // move what into where now
+        //                 view::view_state_2(ctx, g, &app.state);
+        //             });
+        //             // app.view_state(&event);
+        //         }
+        //         _ => (),
+        //     },
+        //     _ => (),
+        // };
+        if let Some(args) = event.update_args() {
+            app.update_state(args.dt);
+        }
+        thread::sleep(time::Duration::from_millis(10));
         window.draw_2d(&event, |ctx, graphics, device| {
             clear([1.0; 4], graphics);
-            rectangle(
-                [1.0, 0.0, 0.0, 0.5], //red
-                [0.0, 0.0, 100.0, 100.0],
-                ctx.transform.clone().trans(50., 20.),
-                graphics,
-            );
+            // rectangle(
+            //     [1.0, 0.0, 0.0, 0.5], //red
+            //     [0.0, 0.0, 100.0, 100.0],
+            //     ctx.transform.clone().trans(50., 20.),
+            //     graphics,
+            // );
+
+            counter += 1;
             let test_str = "aabcc<^&><*&()A0123456789abcdefghijklmnopqrstuvwxyz000->><";
             let str_to_draw = format!("Counter: {}", counter);
-            println!("'{}'", str_to_draw.as_str());
+            // println!("'{}'", str_to_draw.as_str());
 
             glyph_cache_manager.get_glyphs_cache(0, |glyphs| {
                 text(
@@ -223,8 +235,9 @@ fn main() {
                 )
                 .unwrap();
             });
-            // println!("text has been drawn!");
-
+            println!("before view_state");
+            view::view_state(&app.state, ctx, graphics);
+            println!("after view_state");
             // Update glyphs before rendering.
             glyph_cache_manager.flush_factor_encode(device);
         });

@@ -1,10 +1,13 @@
 extern crate shared;
+
 use shared::State;
 
 #[no_mangle]
-pub fn update_state(state: &mut State) {
+pub fn update_state(delta: f64, state: &mut State) {
+    state.x += 100. * delta;
+    state.x %= 500.;
     let n = match state.items.last() {
-        Some(x) => x + state.rng.gen_range(-5, 5),
+        Some(x) => x + (delta * 1000.0) as i32,
         None => 0,
     };
 

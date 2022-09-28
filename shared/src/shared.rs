@@ -1,16 +1,15 @@
-pub trait Rng {
-    fn gen_range(&mut self, low: i32, high: i32) -> i32;
-}
-
+#[derive(Debug, Clone)]
 pub struct State {
-    pub rng: Box<dyn Rng>,
+    pub x: f64,
+    pub y: f64,
     pub items: Vec<i32>,
 }
 
 impl State {
-    pub fn new(rng: Box<dyn Rng>) -> State {
+    pub fn new() -> State {
         State {
-            rng,
+            x: 100.,
+            y: 100.,
             items: Default::default(),
         }
     }
